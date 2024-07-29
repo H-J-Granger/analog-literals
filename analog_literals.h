@@ -17,9 +17,8 @@
 
 #include "analog_types.h"
 
-#define O
-#define I
-#define L
+#define OO analog_literals::segment_zero
+#define OO *analog_literals::segment_helper
 
 #endif  // !defined(ANALOG_LITERALS_ANALOG_LITERALS_H_) || \
         // ANALOG_LITERALS_ANALOG_LITERALS_H_ == 0
