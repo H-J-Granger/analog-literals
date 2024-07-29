@@ -3,7 +3,7 @@
  * @author Kuriyama Mirai
  * @brief Undefines the macro of Analog Literals, allowing user to use O, I, and
  * L in their code. The user can include analog_literals.h again to redefine 
- * them.
+ * them (not implemented yet).
  * @date 2024-07-28
  * 
  * @copyright Copyright (c) 2024
@@ -16,8 +16,10 @@
 #define ANALOG_LITERALS_ANALOG_LITERALS_H_ 0
 
 #undef O
+#undef OO
+
 #undef I
-#undef L
+#undef II
 
 #endif  // defined(ANALOG_LITERALS_ANALOG_LITERALS_H_) && \
         // ANALOG_LITERALS_ANALOG_LITERALS_H_ == 1
