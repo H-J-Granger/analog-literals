@@ -85,7 +85,7 @@ class segment_helper {
 
 class rectangle {
  public:
-  int length, width;
+  int length, height;
 
 #ifdef ANALOG_LITERALS_DEBUG
  public:
@@ -95,14 +95,14 @@ class rectangle {
   int i_count;
 
  public:
-  explicit constexpr rectangle(int length_ = 0, int width_ = 0,
+  explicit constexpr rectangle(int length_ = 0, int height_ = 0,
                                int i_count_ = 0) noexcept
-      : length(length_), width(width_), i_count(i_count_) {}
+      : length(length_), height(height_), i_count(i_count_) {}
   // constexpr rectangle(segment const& a) noexcept
-  //     : length(a.length), width(1), i_count(0) {}
+  //     : length(a.length), height(1), i_count(0) {}
 
   constexpr int area() const noexcept {
-    return this->length * this->width;
+    return this->length * this->height;
   }
 
 #if __cplusplus < 20200200L
@@ -130,9 +130,9 @@ class rectangle {
   }
 #endif
 
-  // Check if with same length and same width.
+  // Check if with same length and same height.
   constexpr bool same_as(rectangle const& x) const noexcept {
-    return this->length == x.length && this->width == x.width;
+    return this->length == x.length && this->height == x.height;
   }
 
   constexpr rectangle operator*(segment const& x) const noexcept;
@@ -169,7 +169,7 @@ class left_shifter {
 
 class cuboid {
  public:
-  int length, width, depth;
+  int length, height, depth;
 
 #ifdef ANALOG_LITERALS_DEBUG
  public:
@@ -180,18 +180,18 @@ class cuboid {
   int i_count, l_count;
 
  public:
-  explicit constexpr cuboid(int length_ = 0, int width_ = 0, int depth_ = 0,
+  explicit constexpr cuboid(int length_ = 0, int height_ = 0, int depth_ = 0,
                             int i_count_ = 0, int l_count_ = 0) noexcept
       : length(length_),
-        width(width_),
+        height(height_),
         depth(depth_),
         i_count(i_count_),
         l_count(l_count_) {}
   // constexpr rectangle(segment const& a) noexcept
-  //     : length(a.length), width(1), i_count(0) {}
+  //     : length(a.length), height(1), i_count(0) {}
 
   constexpr int volume() const noexcept {
-    return this->length * this->width * this->depth;
+    return this->length * this->height * this->depth;
   }
 
 #if __cplusplus < 20200200L
@@ -219,9 +219,9 @@ class cuboid {
   }
 #endif
 
-  // Check if with same length, same width, and same depth.
+  // Check if with same length, same height, and same depth.
   constexpr bool same_as(cuboid const& x) const noexcept {
-    return this->length == x.length && this->width == x.width &&
+    return this->length == x.length && this->height == x.height &&
            this->depth == x.depth;
   }
   constexpr cuboid operator-(rectangle const& x) const noexcept;
@@ -285,8 +285,8 @@ inline constexpr segment segment_helper::operator*(
 }
 
 /**
- * ===================== Rectangle Literal (width == 0) ======================
- * A rectangle literal with width == 0 is in one of these two format:
+ * ===================== Rectangle Literal (height == 0) ======================
+ * A rectangle literal with height == 0 is in one of these two format:
  * OO OO , O-O O-O , (O--...) O (O--...) O , and (O--...) - O (O--...) - O.
  * (a) For the first type, it reads +segment(0) + segment(0), simply returns a 
  *     rectangle(0, 0) will work.
@@ -352,8 +352,8 @@ inline constexpr rectangle rectangle::operator-(
 }
 
 /**
- * =============== Cuboid Literal (width == 0 && depth == 0) =================
- * A rectangle literal with width == 0 && depth == 0 is in one of these three
+ * =============== Cuboid Literal (height == 0 && depth == 0) =================
+ * A rectangle literal with height == 0 && depth == 0 is in one of these three
  * format: (O--...) O (OO--...) O (O--...) O  ,
  * (O--...) - O OO--... - O O--... - O , and O-O OO-O O-O.
  * (a) For the first type, it reads
@@ -379,7 +379,7 @@ inline constexpr rectangle rectangle::operator-(
 
 // Completes a (2k)x0x0 cuboid.
 inline constexpr cuboid segment::operator+(rectangle const& x) const noexcept {
-  return cuboid(x.length, x.width, 0);
+  return cuboid(x.length, x.height, 0);
 }
 
 // Starts a (2k+1)x0x0 cuboid.
@@ -404,8 +404,8 @@ inline constexpr cuboid rectangle::operator-(
 // The 1x0x0 cuboid completes with other (2k-1)x0x0 cuboid, as above.
 
 /**
- * ===================== Rectangle Literal (width > 0) =======================
- * A rectangle literal with width > 0 is always:
+ * ===================== Rectangle Literal (height > 0) =======================
+ * A rectangle literal with height > 0 is always:
  *    [segment of length k] I ...(2w Is)... I [segment of length k].
  * For convience's sake, we define 'II' as 'I I'.
  * An 'I' is defined as << left_shift, so the rectangle (with length > 0) will 
@@ -415,7 +415,7 @@ inline constexpr cuboid rectangle::operator-(
  * A segment(n) left-shifting a left_shifter will returns a rectangle(n, 0) 
  * which counts 'I' while left-shifting. The last left_shift will eat all the 
  * unused parts of segment and tells the rectangle to let its i-count 
- * contribute to width.
+ * contribute to height.
  * Now let's consider rectangles with length == 0. They will read:
  *          segment(n) << left_shift << ... << left_shift + segment(0).
  * Adding a left_shifter::operator+(segment) method simply works.
@@ -434,7 +434,7 @@ inline constexpr rectangle rectangle::operator<<(
     left_shifter const& x) const noexcept {
   // When building a rectangle, add i_count each time left-shifting;
   // When completing a rectangle, add i_count for the final time and divide it
-  // by 2 to get width.
+  // by 2 to get its height.
   return !x.is_end ? rectangle(this->length, 0, this->i_count + 1)
                    : rectangle(this->length, (this->i_count + 1) / 2);
 }
