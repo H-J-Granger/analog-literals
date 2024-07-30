@@ -64,7 +64,7 @@ class segment {
   constexpr rectangle operator*(segment_helper const& x) const noexcept;
 
   constexpr cuboid operator+(rectangle const& x) const noexcept;
-  constexpr cuboid segment::operator+(segment_helper const& x) const noexcept;
+  constexpr cuboid operator+(segment_helper const& x) const noexcept;
 
   constexpr rectangle operator<<(left_shifter const& x) const noexcept;
 };
@@ -157,14 +157,10 @@ class left_shifter {
   bool is_end;
   explicit constexpr left_shifter(bool is_end_) noexcept : is_end(is_end_) {}
 
-  constexpr left_shifter left_shifter::operator*(
-      segment_helper const& x) const noexcept;
-  constexpr left_shifter left_shifter::operator*(
-      segment const& x) const noexcept;
-  constexpr left_shifter left_shifter::operator-(
-      segment const& x) const noexcept;
-  constexpr left_shifter left_shifter::operator+(
-      segment const& x) const noexcept;
+  constexpr left_shifter operator*(segment_helper const& x) const noexcept;
+  constexpr left_shifter operator*(segment const& x) const noexcept;
+  constexpr left_shifter operator-(segment const& x) const noexcept;
+  constexpr left_shifter operator+(segment const& x) const noexcept;
 };
 
 class cuboid {
