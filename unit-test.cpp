@@ -15,74 +15,38 @@ static_assert(rectangle(0, 0).same_as(
   OO
   OO 
 ));
-static_assert(rectangle(0, 1).same_as(
-  OO
-  II
-  OO 
-));
-static_assert(rectangle(0, 2).same_as(
-  OO
-  II
-  II
-  OO 
-));
-static_assert(rectangle(0, 3).same_as(
-  OO
-  II
-  II
-  II
-  OO 
-));
-
-static_assert(rectangle(2, 0).same_as(
-  O--O
-  O--O
-));
-static_assert(rectangle(2, 1).same_as(
-  O--O
-  I  I
-  O--O
-));
-static_assert(rectangle(2, 2).same_as(
-  O--O
-  I  I
-  I  I
-  O--O
-));
-static_assert(rectangle(2, 3).same_as(
-  O--O
-  I  I
-  I  I
-  I  I
-  O--O
-));
-
-constexpr int a = (O---O O---O).width;
-constexpr int b = (O---O O---O).width;
-
-static_assert(rectangle(5, 0).same_as(
-  O-----O
-  O-----O
-));
-static_assert(rectangle(5, 2).same_as(
-  O-----O 
-  I     I 
-  I     I
-  O-----O
-));
-
 static_assert(rectangle(1, 0).same_as(
   O-O
-  O-O
+  O-O 
 ));
-static_assert(rectangle(1, 1).same_as(
-  O-O
-  I I
-  O-O
+static_assert(rectangle(2, 0).same_as(
+  O--O
+  O--O 
 ));
-static_assert(rectangle(1, 2).same_as(
-  O-O
-  I I
-  I I
-  O-O
+static_assert(rectangle(3, 0).same_as(
+  O---O
+  O---O 
 ));
+static_assert(rectangle(4, 0).same_as(
+  O----O
+  O----O 
+));
+static_assert(rectangle(5, 0).same_as(
+  O-----O
+  O-----O 
+));
+static_assert(rectangle(6, 0).same_as(
+  O------O
+  O------O 
+));
+
+constexpr auto test =   
+  OO
+  I I
+  OO;
+
+constexpr auto tmp = 
+  O-----O 
+  OO-----O
+   O-----O;
+

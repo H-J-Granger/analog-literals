@@ -22,11 +22,11 @@
 
 #include "analog_types.h"
 
-#define OO ANALOG_LITERAL_OO
-#define O ANALOG_LITERAL_O
+#define OO ANALOG_LITERALS_OO
+#define O ANALOG_LITERALS_O
 
-#define II ANALOG_LITERAL_II
-#define I ANALOG_LITERAL_I
+#define II ANALOG_LITERALS_II
+#define I ANALOG_LITERALS_I
 
 #endif  // !defined(ANALOG_LITERALS_ANALOG_LITERALS_H_) || \
         // ANALOG_LITERALS_ANALOG_LITERALS_H_ == 0
