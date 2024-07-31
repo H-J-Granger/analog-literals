@@ -22,6 +22,7 @@
 
 #include "analog_types.h"
 
+#define OOO ANALOG_LITERALS_OOO
 #define OO ANALOG_LITERALS_OO
 #define O ANALOG_LITERALS_O
 

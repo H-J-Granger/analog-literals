@@ -40,13 +40,13 @@ static_assert(rectangle(6, 0).same_as(
   O------O 
 ));
 
-constexpr auto test =   
+static_assert(rectangle(0, 0).same_as(
   OO
-  I I
-  OO;
+  OO 
+));
 
 constexpr auto tmp = 
-  O-----O 
-  OO-----O
-   O-----O;
+  OO 
+  OOO
+   OO;
 

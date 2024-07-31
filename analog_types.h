@@ -10,17 +10,33 @@
 #ifndef ANALOG_LITERALS_ANALOG_TYPES_H_
 #define ANALOG_LITERALS_ANALOG_TYPES_H_
 
+#include <type_traits>
+
 namespace analog_literals {
 
 // #define ANALOG_LITERALS_DEBUG
+
+template <bool condition, typename type_if_true, typename type_if_false>
+using type_if =
+    typename std::conditional<condition, type_if_true, type_if_false>::type;
 
 class segment;
 class segment_helper;
 class rectangle;
 class rectangle_helper;
-class left_shifter;
 class cuboid;
-class right_shifter;
+class cuboid_0_0_0_helper;
+
+enum class signal_t : int {
+  no_operation,
+  rectangle_reach_end,
+  rectangle_add_one_i,
+  accept_next_lsh_and_finalize,
+  add_one_l,
+  build_a_0_0_0_cuboid
+};
+template <signal_t signal>
+class shifter;
 
 class segment {
  public:
@@ -66,7 +82,13 @@ class segment {
   constexpr cuboid operator+(rectangle const& x) const noexcept;
   constexpr cuboid operator+(segment_helper const& x) const noexcept;
 
-  constexpr rectangle operator<<(left_shifter const& x) const noexcept;
+  constexpr rectangle operator<<(
+      shifter<signal_t::rectangle_add_one_i> const& x) const noexcept;
+
+  constexpr cuboid_0_0_0_helper operator+(
+      cuboid_0_0_0_helper const& x) const noexcept;
+  constexpr cuboid operator<<(
+      shifter<signal_t::build_a_0_0_0_cuboid> const& x) const noexcept;
 };
 
 class segment_helper {
@@ -141,7 +163,10 @@ class rectangle {
 
   constexpr cuboid operator-(rectangle const& x) const noexcept;
 
-  constexpr rectangle operator<<(left_shifter const& x) const noexcept;
+  constexpr rectangle operator<<(
+      shifter<signal_t::rectangle_add_one_i> const& x) const noexcept;
+  constexpr rectangle operator<<(
+      shifter<signal_t::rectangle_reach_end> const& x) const noexcept;
 };
 
 class rectangle_helper {
@@ -150,17 +175,6 @@ class rectangle_helper {
   explicit constexpr rectangle_helper() noexcept : value(0) {}
 
   constexpr rectangle operator-(segment const& x) const noexcept;
-};
-
-class left_shifter {
- public:
-  bool is_end;
-  explicit constexpr left_shifter(bool is_end_) noexcept : is_end(is_end_) {}
-
-  constexpr left_shifter operator*(segment_helper const& x) const noexcept;
-  constexpr left_shifter operator*(segment const& x) const noexcept;
-  constexpr left_shifter operator-(segment const& x) const noexcept;
-  constexpr left_shifter operator+(segment const& x) const noexcept;
 };
 
 class cuboid {
@@ -222,6 +236,59 @@ class cuboid {
   }
   constexpr cuboid operator-(rectangle const& x) const noexcept;
   constexpr cuboid operator-(segment const& x) const noexcept;
+};
+
+template <signal_t signal>
+class shifter {
+ public:
+  int value;
+  explicit constexpr shifter(int value_ = 0) noexcept : value(value_) {}
+
+  // clang-format off
+  
+  // These fancy setups can help compiler deduce the functions' return types
+  // only using their parameter types.
+  
+  // template <typename T>
+  // constexpr T1 operator<<(T x) const noexcept;
+  
+  template <typename T>
+  constexpr 
+      type_if<signal == signal_t::rectangle_reach_end &&
+              std::is_same<T, segment>::value,
+          shifter<signal_t::rectangle_reach_end>,
+          shifter<signal_t::no_operation>
+      >
+  operator-(T x) const noexcept;
+
+  template <typename T>
+  constexpr  
+      type_if<signal == signal_t::rectangle_add_one_i &&
+              std::is_same<T, segment_helper>::value,
+          shifter<signal_t::rectangle_reach_end>,
+      type_if<signal == signal_t::rectangle_reach_end &&
+              std::is_same<T, segment>::value,
+          shifter<signal_t::rectangle_reach_end>,
+      type_if<signal == signal_t::rectangle_add_one_i &&
+              std::is_same<T, segment>::value,
+          shifter<signal_t::rectangle_reach_end>,
+          shifter<signal_t::no_operation>
+      >>>
+  operator*(T x) const noexcept;
+
+  template <typename T>
+  constexpr
+      type_if<signal == signal_t::rectangle_add_one_i &&
+              std::is_same<T, segment>::value,
+          shifter<signal_t::rectangle_reach_end>,
+      type_if<signal == signal_t::build_a_0_0_0_cuboid &&
+              std::is_same<T, segment>::value,
+          shifter<signal_t::build_a_0_0_0_cuboid>,
+          shifter<signal_t::no_operation>
+      >>
+  operator+(T x) const noexcept;
+
+  // clang-format on
 };
 
 /**  
@@ -349,9 +416,9 @@ inline constexpr rectangle rectangle::operator-(
 
 /**
  * =============== Cuboid Literal (height == 0 && depth == 0) =================
- * A rectangle literal with height == 0 && depth == 0 is in one of these three
+ * A rectangle literal with height == 0 && depth == 0 is in one of these four
  * format: (O--...) O (OO--...) O (O--...) O  ,
- * (O--...) - O OO--... - O O--... - O , and O-O OO-O O-O.
+ * (O--...) - O OO--... - O O--... - O , O-O OO-O O-O, and OO OOO OO.
  * (a) For the first type, it reads
  *                      *(segment(1)--...) * segment(1) +  \
  *        (segment(0)--...) * segment(1) * (segment(1)--...) * segment(1).
@@ -371,6 +438,8 @@ inline constexpr rectangle rectangle::operator-(
  *                rectangle(0, 0) - rectangle(0, 1) - segment(1).
  *     Letting the first binary - returns cuboid(1, 0, 0) and ignores the rest
  *     does the job.
+ * (d) For the fourth type, we define OOO as << shift, then swallow the 
+ *     +segment(0) after it.
  */
 
 // Completes a (2k)x0x0 cuboid.
@@ -399,63 +468,102 @@ inline constexpr cuboid rectangle::operator-(
 }
 // The 1x0x0 cuboid completes with other (2k-1)x0x0 cuboid, as above.
 
+// Starts a 0x0x0 cuboid.
+template <>
+template <>
+inline constexpr shifter<signal_t::build_a_0_0_0_cuboid>
+shifter<signal_t::build_a_0_0_0_cuboid>::operator+(segment x) const noexcept {
+  return shifter<signal_t::build_a_0_0_0_cuboid>();
+}
+
+// Completes a 0x0x0 cuboid.
+inline constexpr cuboid segment::operator<<(
+    shifter<signal_t::build_a_0_0_0_cuboid> const& x) const noexcept {
+  return cuboid(0, 0, 0);
+}
+
+// Builds a 0x0x0 cuboid.
+#define ANALOG_LITERALS_OOO       \
+  << (::analog_literals::shifter< \
+      ::analog_literals::signal_t::build_a_0_0_0_cuboid>(0))
+
 /**
  * ===================== Rectangle Literal (height > 0) =======================
  * A rectangle literal with height > 0 is always:
  *    [segment of length k] I ...(2w Is)... I [segment of length k].
  * For convience's sake, we define 'II' as 'I I'.
- * An 'I' is defined as << left_shift, so the rectangle (with length > 0) will 
- * read: 
- *                segment(n) << left_shift << ... <<  \ 
- *            left_shift * segment(1)--... [-/*] segment(1). 
- * A segment(n) left-shifting a left_shifter will returns a rectangle(n, 0) 
- * which counts 'I' while left-shifting. The last left_shift will eat all the 
- * unused parts of segment and tells the rectangle to let its i-count 
- * contribute to height.
+ * An 'I' is defined as << shift, so the rectangle (with length > 0) will read: 
+ *                    segment(n) << shift << ... <<  \ 
+ *                shift * segment(1)--... [-/*] segment(1). 
+ * A segment(n) shifting a shift will returns a rectangle(n, 0) which counts 'I' 
+ * while shifting. The last shift will eat all the unused parts of segment and 
+ * tells the rectangle to let its i-count contribute to height.
  * Now let's consider rectangles with length == 0. They will read:
- *          segment(n) << left_shift << ... << left_shift + segment(0).
- * Adding a left_shifter::operator+(segment) method simply works.
+ *          segment(n) << shift << ... << shift + segment(0).
+ * Adding a shift::operator+(segment) method simply works.
  */
 
 // Builds a rectangle with length > 0.
-#define ANALOG_LITERALS_I << (::analog_literals::left_shifter(false))
+#define ANALOG_LITERALS_I         \
+  << (::analog_literals::shifter< \
+      ::analog_literals::signal_t::rectangle_add_one_i>(0))
 
 // Starts a rectangle with length > 0.
 inline constexpr rectangle segment::operator<<(
-    left_shifter const& x) const noexcept {
+    shifter<signal_t::rectangle_add_one_i> const& x) const noexcept {
   return rectangle(this->length, 0, 1);
 }
-// Builds and completes a rectangle with length > 0.
+
+// Builds a rectangle with length > 0.
 inline constexpr rectangle rectangle::operator<<(
-    left_shifter const& x) const noexcept {
-  // When building a rectangle, add i_count each time left-shifting;
-  // When completing a rectangle, add i_count for the final time and divide it
-  // by 2 to get its height.
-  return !x.is_end ? rectangle(this->length, 0, this->i_count + 1)
-                   : rectangle(this->length, (this->i_count + 1) / 2);
+    shifter<signal_t::rectangle_add_one_i> const& x) const noexcept {
+  return rectangle(this->length, 0, this->i_count + 1);
 }
 
-// Steps before completing a rectangle with length > 0.
-inline constexpr left_shifter left_shifter::operator*(
-    segment_helper const& x) const noexcept {
-  return left_shifter(true);
+// Completes a rectangle with length > 0, step 1a.
+template <>
+template <>
+inline constexpr shifter<signal_t::rectangle_reach_end>
+shifter<signal_t::rectangle_add_one_i>::operator*(
+    segment_helper x) const noexcept {
+  return shifter<signal_t::rectangle_reach_end>();
 }
-inline constexpr left_shifter left_shifter::operator*(
-    segment const& x) const noexcept {
-  return left_shifter(true);
-}
-inline constexpr left_shifter left_shifter::operator-(
-    segment const& x) const noexcept {
-  return left_shifter(true);
-}
-
-// The step before completing a rectangle with length > 0.
-inline constexpr left_shifter left_shifter::operator+(
-    segment const& x) const noexcept {
-  return left_shifter(true);
+// Completes a rectangle with length > 0, step 1b.
+template <>
+template <>
+inline constexpr shifter<signal_t::rectangle_reach_end>
+shifter<signal_t::rectangle_add_one_i>::operator*(segment x) const noexcept {
+  return shifter<signal_t::rectangle_reach_end>();
 }
 
-//
+// Completes a rectangle with length > 0, step 2a.
+template <>
+template <>
+inline constexpr shifter<signal_t::rectangle_reach_end>
+shifter<signal_t::rectangle_reach_end>::operator-(segment x) const noexcept {
+  return shifter<signal_t::rectangle_reach_end>();
+}
+// Completes a rectangle with length > 0, step 2b.
+template <>
+template <>
+inline constexpr shifter<signal_t::rectangle_reach_end>
+shifter<signal_t::rectangle_reach_end>::operator*(segment x) const noexcept {
+  return shifter<signal_t::rectangle_reach_end>();
+}
+
+// Completes a rectangle with length == 0, step 1.
+template <>
+template <>
+inline constexpr shifter<signal_t::rectangle_reach_end>
+shifter<signal_t::rectangle_add_one_i>::operator+(segment x) const noexcept {
+  return shifter<signal_t::rectangle_reach_end>();
+}
+
+// Completes a rectangle, final step.
+inline constexpr rectangle rectangle::operator<<(
+    shifter<signal_t::rectangle_reach_end> const& x) const noexcept {
+  return rectangle(this->length, (this->i_count + 1) / 2);
+}
 
 // Builds a rectangle with length == 0.
 #define ANALOG_LITERALS_II ANALOG_LITERALS_I ANALOG_LITERALS_I

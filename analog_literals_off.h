@@ -17,6 +17,7 @@
 
 #undef O
 #undef OO
+#undef OOO
 
 #undef I
 #undef II
